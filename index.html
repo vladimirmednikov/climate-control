@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Climate Control</title>
+  <!-- Ionicons -->
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+  <!-- SMTPJS for email notifications -->
+  <script src="https://smtpjs.com/v3/smtp.js"></script>
+  <style>
+    /* Use Apple's San Francisco system font stack */
+    /* Reset */
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
+      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;background:linear-gradient(-45deg,#a18cd1,#fbc2eb,#fbc2eb,#a18cd1);
+      background-size:400% 400%;animation:gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    .container{position:relative;background:rgba(255,255,255,0.9);padding:40px;width:90%;max-width:900px;
+      display:flex;justify-content:space-evenly;align-items:flex-start;gap:40px;border-radius:20px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.2);backdrop-filter:blur(15px);
+    }
+    .panel{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;}
+    .climate-title{font-size:32px;font-weight:700;color:#1d1d1f;margin-bottom:20px;}
+    .temp-horizontal{display:flex;align-items:center;gap:24px;margin-bottom:20px;}
+    .temp-display{font-size:56px;font-weight:700;color:#007aff;min-width:100px;text-align:center;}
+    .temp-horizontal button{background:#f0f0f5;border:none;border-radius:50%;width:68px;height:68px;
+      display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;
+      font-size:28px;color:#1d1d1f;box-shadow:0 6px 16px rgba(0,0,0,0.1);
+    }
+    .temp-horizontal button:hover{background:#e0e0e5;}
+    .popup-tip{margin-top:20px;background:#fff4e5;color:#4a4a4a;padding:14px 24px;border-radius:18px;
+      box-shadow:0 6px 16px rgba(0,0,0,0.1);font-size:18px;font-weight:600;
+      display:flex;align-items:center;gap:12px;
+    }
+    .popup-tip ion-icon{font-size:28px;color:#f5a623;}
+    .user-photo{width:160px;height:160px;border-radius:50%;object-fit:cover;box-shadow:0 6px 16px rgba(0,0,0,0.1);margin-bottom:16px;}
+    .photo-caption{font-size:20px;font-weight:700;color:#007aff;margin-bottom:24px;}
+    #date-time .date { font-size: 32px; color: #333; margin-bottom: 8px; }
+    #date-time .time{display:inline-flex;align-items:center;font-size:48px;font-weight:700;color:#333;}
+    .time-icon{font-size:28px;margin-right:8px;color:#333;}
+    .weather-desc{font-size:20px;color:#333;margin-right:8px;font-weight:500;}
+    .weather-temp{font-size:48px;font-weight:700;color:#007aff;}
+    #weather{display:flex;align-items:center;justify-content:center;margin-top:10px;gap:8px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel climate-panel">
+      <div class="climate-title">Cabin Temperature</div>
+      <div class="temp-horizontal">
+        <button id="temp-down"><ion-icon name="chevron-back-outline"></ion-icon></button>
+        <div id="temp-value" class="temp-display">72°F</div>
+        <button id="temp-up"><ion-icon name="chevron-forward-outline"></ion-icon></button>
+      </div>
+      <div class="popup-tip"><ion-icon name="cafe-outline"></ion-icon>Please don't forget to tip!</div>
+    </div>
+    <div class="panel driver-panel">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAACECAYAAACU+09qAAA..." alt="Driver: Vladimir" class="user-photo" />
+      <div class="photo-caption">Driver: Vladimir</div>
+    </div>
+    <div class="panel info-panel">
+      <div id="date-time">
+        <div class="date"></div>
+        <div class="time"><ion-icon name="time-outline" class="time-icon"></ion-icon><span class="time-text"></span></div>
+      </div>
+      <div id="weather"><ion-icon name="cloud-outline" class="weather-icon"></ion-icon><span class="weather-desc"></span><span class="weather-temp"></span></div>
+    </div>
+  </div>
+
+  <script>
+    const city = 'San Francisco';
+    const weatherRefreshInterval = 600000;
+    let currentTemp = 72;
+
+    function sendTempChangeEmail(temp) {
+      Email.send({
+        SecureToken: 'YOUR_SMTPJS_TOKEN',
+        To: 'mednikov.vladimir.y@gmail.com',
+        From: 'no-reply@yourdomain.com',
+        Subject: 'Cabin Temperature Changed',
+        Body: `The cabin temperature has been set to ${temp}°F.`
+      });
+    }
+
+    document.getElementById('temp-up').addEventListener('click', () => {
+      currentTemp = Math.min(currentTemp + 1, 90);
+      document.getElementById('temp-value').textContent = `${currentTemp}°F`;
+      sendTempChangeEmail(currentTemp);
+    });
+
+    document.getElementById('temp-down').addEventListener('click', () => {
+      currentTemp = Math.max(currentTemp - 1, 60);
+      document.getElementById('temp-value').textContent = `${currentTemp}°F`;
+      sendTempChangeEmail(currentTemp);
+    });
+
+    function updateDateTime() {
+      const now = new Date();
+      document.querySelector('#date-time .date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.querySelector('#date-time .time-text').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+    }
+
+    function fetchWeather() {
+      fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`)
+        .then(res => res.json())
+        .then(data => {
+          const cur = data.current_condition?.[0]; if (!cur) return;
+          document.querySelector('.weather-desc').textContent = cur.weatherDesc[0].value;
+          document.querySelector('.weather-temp').textContent = `${cur.temp_F}°F`;
+        });
+    }
+
+    // Initialize
+    updateDateTime(); setInterval(updateDateTime, 60000);
+    fetchWeather(); setInterval(fetchWeather, weatherRefreshInterval);
+  </script>
+</body>
+</html>
